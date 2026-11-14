@@ -33,3 +33,21 @@ somarPartida t l p = case resultadoPara t p of
 contar :: Resultado -> Resultado -> Int
 contar esperado res = if res == esperado then 1 else 0
 
+
+linhaDoTime :: [Partida] -> Time -> Linha
+linhaDoTime partidas t = foldl (somarPartida t) (linhaVazia t) (filter (participou t) partidas)
+
+
+pontosLinha :: Linha -> Int
+pontosLinha l = vitorias l * (pontos Vitoria) + empates l * (pontos Empate) +  derrotas l * (pontos Derrota)     
+
+saldo :: Linha -> Int
+saldo l =  golsPro l - golsContra l
+
+-- funcao de aproveitamento quanto % dava  pra aproveitar e quando foi aproveitado 
+-- pontos ganho / jogos * 3 (nao usar div)
+aproveitamento :: Linha -> Double
+aproveitamento l
+  | jogos l == 0 = 0
+  | otherwise    =  100 * fromIntegral (pontosLinha l) / fromIntegral (jogos l * 3)
+
