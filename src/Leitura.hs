@@ -44,3 +44,47 @@ cincoCampos n texto = case map aparar (separar ';' texto) of
   [r, m, gm, gv, v] | not (null m), not (null v) -> Right (r, m, gm, gv, v)
   _ -> Left (CamposInvalidos n texto)
 
+
+
+
+-- transforma uma linha em partida. O primeiro passo que falhar interrompe o resto
+lerPartida :: Int -> String -> Either Erro Partida
+lerPartida n texto = do
+  (r, m, gm, gv, v) <- cincoCampos n texto
+  rod   <- lerNumero n r
+  exigir (rod > 0) (NumeroInvalido n r)
+  golsM <- lerNumero n gm
+  golsV <- lerNumero n gv
+  exigir (golsM >= 0 && golsV >= 0) (PlacarNegativo n)
+  exigir (m /= v) (MesmoTime n m)
+  return (Partida rod m golsM golsV v)
+
+-- numera as linhas e tira as vazias e os comentarios (#)
+linhasUteis :: String -> [(Int, String)]
+linhasUteis texto = filter (util . snd) (zip [1 ..] (lines texto))
+  where
+    util linha = case aparar linha of
+      ""  -> False
+      ('#' : _) -> False
+      _  -> True
+
+-- times que aparecem mais de uma vez na mesma rodada
+repetidosNaRodada :: [Partida] -> [Erro]
+repetidosNaRodada partidas = map virarErro (filter repetido (nub escalados))
+  where
+    escalados = foldr (\p juntados -> (rodada p, mandante p) : (rodada p, visitante p) : juntados) [] partidas
+    repetido par = length (filter (== par) escalados) > 1
+    virarErro (r, t) = TimeRepetidoNaRodada r t
+
+-- le o texto inteiro, parando no primeiro erro
+lerCampeonato :: String -> Either Erro [Partida]
+lerCampeonato texto = do
+  partidas <- traverse (uncurry lerPartida) (linhasUteis texto)
+  maybe (Right partidas) Left (listToMaybe (repetidosNaRodada partidas))
+
+-- lista todos os erros do texto, nao so o primeiro
+todosOsErros :: String -> [Erro]
+todosOsErros texto = lefts leituras ++ repetidosNaRodada (rights leituras)
+  where
+    leituras = map (uncurry lerPartida) (linhasUteis texto)
+
