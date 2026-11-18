@@ -88,3 +88,53 @@ todosOsErros texto = lefts leituras ++ repetidosNaRodada (rights leituras)
   where
     leituras = map (uncurry lerPartida) (linhasUteis texto)
 
+-- largura de cada coluna da tabela
+larguras :: [Int]
+larguras = [5, 15, 5, 4, 4, 4, 4, 5]
+
+-- completa um texto com espacos ate a largura da coluna
+alinhar :: Int -> String -> String
+alinhar n s = s ++ replicate (n - length s) ' '
+
+juntarColunas :: [String] -> String
+juntarColunas colunas = concat (zipWith alinhar larguras colunas)
+
+-- a tabela pronta para imprimir
+tabelaFormatada :: [Linha] -> String
+tabelaFormatada linhas = unlines (cabecalho : zipWith formatar [1 :: Int ..] linhas)
+  where
+    cabecalho = juntarColunas ["Pos", "Time", "P", "J", "V", "E", "D", "SG"]
+    formatar pos l =
+      juntarColunas
+        [ show pos ++ ".",
+         time l,
+         show (pontosLinha l),
+         show (jogos l),
+         show (vitorias l),
+         show (empates l),
+         show (derrotas l),
+         show (saldo l)
+        ]
+
+-- uma partida em texto, ex.: "rodada 3: Flamengo 4 x 0 Sao Paulo"
+descreverPartida :: Partida -> String
+descreverPartida p =
+  "rodada " ++ show (rodada p) ++ ": " ++ mandante p ++ " "
+    ++ show (golsMandante p) ++ " x " ++ show (golsVisitante p) ++ " " ++ visitante p
+
+-- mensagem legivel para cada erro
+descreverErro :: Erro -> String
+descreverErro (CamposInvalidos n texto) =
+  "linha " ++ show n ++ ": esperava 5 campos separados por ';', veio \"" ++ texto ++ "\""
+descreverErro (NumeroInvalido n texto) =
+  "linha " ++ show n ++ ": \"" ++ texto ++ "\" nao e um numero valido"
+descreverErro (PlacarNegativo n) =
+  "linha " ++ show n ++ ": o placar nao pode ser negativo"
+descreverErro (MesmoTime n t) =
+  "linha " ++ show n ++ ": " ++ t ++ " nao pode jogar contra si mesmo"
+descreverErro (TimeRepetidoNaRodada r t) =
+  "rodada " ++ show r ++ ": " ++ t ++ " jogou mais de uma vez"
+
+-- mostra um Double com uma casa decimal (ex.: 66.7)
+umaCasa :: Double -> String
+umaCasa x = show (fromIntegral (round (x * 10) :: Integer) / 10 :: Double)
