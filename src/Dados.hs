@@ -23,3 +23,18 @@ dadosCampeonato = unlines  -- unlines várias linhas em um testo só
     "5;Corinthians;1;3;Internacional",
     "5;Sao Paulo;2;1;Gremio"
   ]
+
+
+-- Dadps com erros
+-- texto com um erro de cada tipo, para testar a Camada 3
+dadosComErros :: String
+dadosComErros = unlines
+  [ "# campeonato com erros de digitacao",
+   "1;Flamengo;2;1;Internacional",
+    "1;Palmeiras;3",
+    "1;Gremio;dois;0;Corinthians",
+    "1;Sao Paulo;-1;0;Corinthians",
+    "2;Palmeiras;1;1;Palmeiras",
+    "2;Flamengo;1;0;Gremio",
+    "2;Flamengo;2;2;Sao Paulo"
+  ]
