@@ -32,6 +32,26 @@ relatorioCampeonato partidas = unlines
     "Media de gols: " ++ maybe "sem partidas" umaCasa (mediaGols [])
   ]
 
+-- texto da leitura do campeonato de teste (camada 3)
+relatorioLeitura :: String
+relatorioLeitura = case lerCampeonato dadosCampeonato of
+  Left erro -> "Erro: " ++ descreverErro erro ++ "\n"
+  Right partidas -> show (length partidas) ++ " partidas lidas sem erro\n" ++ relatorioCampeonato partidas
 
+-- texto do tratamento de uma entrada com erros (camada 3)
+relatorioErros :: String
+relatorioErros = unlines (cabecalho ++ erros)
+  where
+    cabecalho =
+      [ titulo "Entrada com erros",
+        "lerCampeonato para no primeiro erro -> " ++ either descreverErro (const "nenhum erro") (lerCampeonato dadosComErros),
+        "todosOsErros lista todos:"
+      ]
+    erros = map (("  - " ++) . descreverErro) (todosOsErros dadosComErros)
+
+-- a unica funcao com IO: imprime os textos montados acima
 main :: IO ()
-main = putStr (relatorioCampeonato [])
+main = do
+  putStrLn (titulo "Lendo o campeonato de teste")
+  putStr relatorioLeitura
+  putStr relatorioErros
