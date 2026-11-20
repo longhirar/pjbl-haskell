@@ -50,6 +50,30 @@ camada1 = do
   testar "times sem repeticao e em ordem" (times partidas)
     ["Corinthians", "Flamengo", "Gremio", "Internacional", "Palmeiras", "Sao Paulo"]
 
+camada2 :: IO ()
+camada2 = do
+  putStrLn "Camada 2\n"
+  testar "pontos" (map pontos [Vitoria, Empate, Derrota]) [3, 1, 0]
+  testar "classificacao final" (classificacao partidas) tabelaFinal
+  -- Flamengo, Palmeiras e Corinthians tem 8 pontos e 2 vitorias: decide o saldo
+  testar "desempate por saldo (8 pontos)" (map time (take 3 (classificacao partidas)))
+    ["Flamengo", "Palmeiras", "Corinthians"]
+  -- Gremio e Sao Paulo tem 5 pontos e 1 vitoria: decide o saldo
+  testar "desempate por saldo (5 pontos)" (map time (drop 4 (classificacao partidas)))
+    ["Gremio", "Sao Paulo"]
+  testar "classificacao ate a rodada 3" (classificacao (ateRodada 3 partidas)) tabelaRodada3
+  testar "rodada 3 diferente da final" (classificacao (ateRodada 3 partidas) /= tabelaFinal) True
+  testar "saldo do Flamengo" (saldo (linhaDoTime partidas "Flamengo")) 4
+  testar "aproveitamento do Flamengo" (umaCasa (aproveitamento (linhaDoTime partidas "Flamengo"))) "53.3"
+  testar "aproveitamento de quem nao jogou" (aproveitamento (linhaDoTime [] "Flamengo")) 0
+  testar "maior goleada" (maiorGoleada partidas) (Just (Partida 3 "Flamengo" 4 0 "Sao Paulo"))
+  testar "media de gols" (fmap umaCasa (mediaGols partidas)) (Just "2.5")
+  testar "maiorGoleada vazia" (maiorGoleada []) Nothing
+  testar "mediaGols vazia" (mediaGols []) Nothing
+  testar "classificacao vazia" (classificacao []) []
+
 
 main :: IO ()
-main = camada1
+main = do
+  camada1
+  camada2
