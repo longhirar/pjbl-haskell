@@ -72,8 +72,36 @@ camada2 = do
   testar "mediaGols vazia" (mediaGols []) Nothing
   testar "classificacao vazia" (classificacao []) []
 
+camada3 :: IO ()
+camada3 = do
+  putStrLn "Camada 3\n"
+  testar "separar" (separar ';' "1;Flamengo;2;1;Gremio") ["1", "Flamengo", "2", "1", "Gremio"]
+  testar "lerCampeonato valido devolve Right" (fmap length (lerCampeonato dadosCampeonato)) (Right 15)
+  testar "lerPartida valida" (lerPartida 1 "1;Flamengo;2;1;Gremio")
+    (Right (Partida 1 "Flamengo" 2 1 "Gremio"))
+  testar "erro CamposInvalidos" (lerPartida 7 "1;Flamengo;2")
+    (Left (CamposInvalidos 7 "1;Flamengo;2"))
+  testar "erro NumeroInvalido" (lerPartida 8 "1;Flamengo;dois;1;Gremio")
+    (Left (NumeroInvalido 8 "dois"))
+  testar "erro PlacarNegativo" (lerPartida 9 "1;Flamengo;-2;1;Gremio")
+    (Left (PlacarNegativo 9))
+  testar "erro MesmoTime" (lerPartida 10 "1;Flamengo;1;1;Flamengo")
+    (Left (MesmoTime 10 "Flamengo"))
+  testar "erro TimeRepetidoNaRodada" (lerCampeonato "1;Flamengo;1;0;Gremio\n1;Flamengo;2;2;Palmeiras\n")
+    (Left (TimeRepetidoNaRodada 1 "Flamengo"))
+  testar "lerCampeonato para no primeiro erro" (lerCampeonato dadosComErros)
+    (Left (CamposInvalidos 3 "1;Palmeiras;3"))
+  testar "todosOsErros lista todos os erros" (todosOsErros dadosComErros)
+    [ CamposInvalidos 3 "1;Palmeiras;3"
+    , NumeroInvalido 4 "dois"
+    , PlacarNegativo 5
+    , MesmoTime 6 "Palmeiras"
+    , TimeRepetidoNaRodada 2 "Flamengo"
+    ]
+  testar "texto vazio" (lerCampeonato "") (Right [])
 
 main :: IO ()
 main = do
   camada1
   camada2
+  camada3
