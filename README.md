@@ -18,3 +18,29 @@ GHC local (instalado pelo GHCup), versão 9.10.
     tests/Testes.hs       testes com o resultado esperado
     docs/decisoes.md      decisões de modelagem e limitações
 
+## Como rodar
+
+Abra o terminal dentro da pasta do projeto.
+
+Para rodar o programa:
+
+    runghc -isrc src/Main.hs
+
+Para rodar os testes:
+
+    runghc -isrc tests/Testes.hs
+
+Para conferir se o código compila sem avisos:
+
+    ghc -Wall -isrc -fno-code src/Main.hs
+
+O `-isrc` indica ao GHC que os módulos ficam dentro da pasta `src`.
+
+## Formato da entrada
+
+Cada linha descreve uma partida, com os campos separados por ponto e vírgula. Linhas em branco e linhas que começam com `#` são ignoradas.
+
+    # rodada;mandante;gols mandante;gols visitante;visitante
+    1;Flamengo;2;1;Internacional
+
+Os dados ficam em `src/Dados.hs`, então o programa não precisa de entrada pelo teclado.
