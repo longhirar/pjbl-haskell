@@ -4,6 +4,7 @@ import Tipos
 import Classificacao
 import Leitura
 import Dados
+import Data.List (nub)
 
 -- funcao de teste 
 testar :: (Eq a, Show a) => String -> a -> a -> IO ()
@@ -41,6 +42,28 @@ tabelaRodada3 =
    Linha "Sao Paulo" 3 0 1 2 0 6
   ]
 
+-- desempate por vitorias: Zeta e Alfa terminam com 3 pontos.
+-- Zeta (1V 0E 1D, saldo -2) fica na frente de Alfa (0V 3E 0D, saldo 0) so pelas
+-- vitorias; pelo saldo ou pela ordem alfabetica Alfa ficaria na frente.
+-- Delta e Omega empatam em 1 ponto e 0 vitorias, e o saldo decide (0 contra -1).
+desempateVitorias :: [Partida]
+desempateVitorias =
+  [ Partida 1 "Zeta" 1 0 "Omega",
+    Partida 1 "Alfa" 0 0 "Beta",
+    Partida 2 "Zeta" 0 3 "Beta",
+    Partida 2 "Alfa" 1 1 "Omega",
+    Partida 3 "Alfa" 0 0 "Delta"
+  ]
+
+-- desempate por gols pro: Kappa, Tau, Gama e Rho empatam em 1 ponto, 0 vitorias e
+-- saldo 0. Kappa e Tau fazem 2 gols, Gama e Rho nenhum. Pela ordem alfabetica
+-- Gama ficaria na frente; so os gols pro colocam Kappa primeiro.
+desempateGolsPro :: [Partida]
+desempateGolsPro =
+  [ Partida 1 "Kappa" 2 2 "Tau",
+    Partida 1 "Gama" 0 0 "Rho"
+  ]
+
 camada1 :: IO ()
 camada1 = do
   putStrLn "Camada 1\n"
@@ -71,6 +94,21 @@ camada2 = do
   testar "maiorGoleada vazia" (maiorGoleada []) Nothing
   testar "mediaGols vazia" (mediaGols []) Nothing
   testar "classificacao vazia" (classificacao []) []
+  testar "desempate por vitorias: pontos iguais"
+    (map (pontosLinha . linhaDoTime desempateVitorias) ["Zeta", "Alfa"]) [3, 3]
+  testar "desempate por vitorias (3 pontos)"
+    (map time (classificacao desempateVitorias))
+    ["Beta", "Zeta", "Alfa", "Delta", "Omega"]
+  testar "desempate por saldo (1 ponto, 0 vitorias)"
+    (map saldo (drop 3 (classificacao desempateVitorias))) [0, -1]
+  testar "desempate por gols pro (1 ponto, 0 vitorias, saldo 0)"
+    (map time (classificacao desempateGolsPro))
+    ["Kappa", "Tau", "Gama", "Rho"]
+  testar "tabela alinhada com nome longo"
+    (length (nub (map length (lines (tabelaFormatada
+      [Linha "Atletico Mineiro Futebol Clube" 1 1 0 0 1 0,
+       Linha "Sao Paulo" 1 0 0 1 0 1])))))
+    1
 
 camada3 :: IO ()
 camada3 = do
@@ -99,6 +137,17 @@ camada3 = do
     , TimeRepetidoNaRodada 2 "Flamengo"
     ]
   testar "texto vazio" (lerCampeonato "") (Right [])
+  testar "placar hexadecimal" (lerPartida 11 "1;Flamengo;0x2;1;Gremio")
+    (Left (NumeroInvalido 11 "0x2"))
+  testar "placar entre parenteses" (lerPartida 12 "1;Flamengo;(2);1;Gremio")
+    (Left (NumeroInvalido 12 "(2)"))
+  testar "placar notacao cientifica" (lerPartida 13 "1;Flamengo;1e1;1;Gremio")
+    (Left (NumeroInvalido 13 "1e1"))
+  testar "placar grande demais para Int"
+    (lerPartida 14 "1;Flamengo;99999999999999999999;1;Gremio")
+    (Left (NumeroInvalido 14 "99999999999999999999"))
+  testar "so o sinal de menos" (lerPartida 15 "1;Flamengo;-;1;Gremio")
+    (Left (NumeroInvalido 15 "-"))
 
 main :: IO ()
 main = do

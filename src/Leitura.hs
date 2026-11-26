@@ -1,5 +1,5 @@
 module Leitura where
-import Data.Char (isSpace)
+import Data.Char (isDigit, isSpace)
 import Data.Either (lefts, rights)
 import Data.List (dropWhileEnd, nub)
 import Data.Maybe (listToMaybe)
@@ -31,7 +31,23 @@ aparar = dropWhileEnd isSpace . dropWhile isSpace
 
 --converter um texto em numero com readMaybe, se nao for numero, vira erro
 lerNumero :: Int -> String -> Either Erro Int
-lerNumero n s = maybe (Left (NumeroInvalido n s)) Right (readMaybe s)
+lerNumero n s = maybe (Left (NumeroInvalido n s)) Right (inteiroValido s)
+
+-- so aceita digitos (com '-' opcional na frente) e que caiba num Int.
+-- Isso rejeita formatos que o readMaybe aceitaria, como "0x2" e "(2)",
+-- e evita que um numero enorme estoure o Int sem avisar
+inteiroValido :: String -> Maybe Int
+inteiroValido s
+  | soDigitos s = readMaybe s >>= noIntervalo
+  | otherwise   = Nothing
+  where
+    soDigitos ('-' : ds) = digitos ds
+    soDigitos ds         = digitos ds
+    digitos ds = not (null ds) && all isDigit ds
+    noIntervalo :: Integer -> Maybe Int
+    noIntervalo i
+      | i >= toInteger (minBound :: Int) && i <= toInteger (maxBound :: Int) = Just (fromInteger i)
+      | otherwise = Nothing
 
 -- se a condicao for falsa, devolve o erro
 exigir :: Bool -> Erro -> Either Erro ()
@@ -88,24 +104,25 @@ todosOsErros texto = lefts leituras ++ repetidosNaRodada (rights leituras)
   where
     leituras = map (uncurry lerPartida) (linhasUteis texto)
 
--- largura de cada coluna da tabela
-larguras :: [Int]
-larguras = [5, 15, 5, 4, 4, 4, 4, 5]
+-- largura de cada coluna da tabela; a do time acompanha o maior nome (nunca menos que 4)
+larguras :: [Linha] -> [Int]
+larguras linhas = [5, maximum (4 : map (length . time) linhas) + 2, 5, 4, 4, 4, 4, 5]
 
 -- completa um texto com espacos ate a largura da coluna
 alinhar :: Int -> String -> String
 alinhar n s = s ++ replicate (n - length s) ' '
 
-juntarColunas :: [String] -> String
-juntarColunas colunas = concat (zipWith alinhar larguras colunas)
+juntarColunas :: [Int] -> [String] -> String
+juntarColunas ws colunas = concat (zipWith alinhar ws colunas)
 
 -- a tabela pronta para imprimir
 tabelaFormatada :: [Linha] -> String
 tabelaFormatada linhas = unlines (cabecalho : zipWith formatar [1 :: Int ..] linhas)
   where
-    cabecalho = juntarColunas ["Pos", "Time", "P", "J", "V", "E", "D", "SG"]
+    ws = larguras linhas
+    cabecalho = juntarColunas ws ["Pos", "Time", "P", "J", "V", "E", "D", "SG"]
     formatar pos l =
-      juntarColunas
+      juntarColunas ws
         [ show pos ++ ".",
          time l,
          show (pontosLinha l),
